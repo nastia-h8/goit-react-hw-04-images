@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Header, Form, Input, Button } from './SearchBar.styled';
 import { BsSearch } from 'react-icons/bs';
 
-export function Searchbar({ onSubmit }) {
+export function Searchbar({ onSubmit, disabled }) {
   const [query, setQuery] = useState('');
 
   const onSearchInputChange = e => setQuery(e.target.value);
@@ -25,7 +25,7 @@ export function Searchbar({ onSubmit }) {
   return (
     <Header>
       <Form onSubmit={onSearchFormSubmit}>
-        <Button type="submit">
+        <Button type="submit" disabled={disabled}>
           <BsSearch size={20} />
         </Button>
         <Input
@@ -44,4 +44,5 @@ export function Searchbar({ onSubmit }) {
 
 Searchbar.propTypes = {
   onSubmit: PropTypes.func.isRequired,
+  disabled: PropTypes.bool.isRequired,
 };

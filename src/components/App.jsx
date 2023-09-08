@@ -32,6 +32,7 @@ export function App() {
 
         const queryToSearch = query.split('/').slice(1).join('');
         const response = await pixabayAPI.getImages(queryToSearch, page);
+        console.log(response);
 
         if (!response.hits.length) {
           toast.error('Sorry, no images found');
@@ -43,7 +44,8 @@ export function App() {
         setItems(prevItems => [...prevItems, ...response.hits]);
         setTotal(response.total);
       } catch (error) {
-        setError(true);
+        console.log(error);
+        if (error.code !== 'ERR_CANCELED') setError(true);
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +71,10 @@ export function App() {
 
   return (
     <Layout>
-      <Searchbar onSubmit={onSearchFormSubmit} />
+      <Searchbar
+        onSubmit={onSearchFormSubmit}
+        disabled={isLoading ? true : false}
+      />
 
       {items.length > 0 && (
         <>
@@ -77,7 +82,10 @@ export function App() {
           {items.length === total ? (
             <Message>The end of results</Message>
           ) : (
-            <LoadMoreBtn onLoadMore={onLoadMoreClick} />
+            <LoadMoreBtn
+              disabled={isLoading ? true : false}
+              onLoadMore={onLoadMoreClick}
+            />
           )}
         </>
       )}
