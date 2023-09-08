@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import { onWindowScroll } from 'helpers/smoothScrollBy';
@@ -14,97 +14,83 @@ import { ScrollToTopBtn } from './ScrollToTopBtn/ScrollToTopBtn';
 import { GlobalStyle } from './GlobalStyle';
 import { Layout } from 'components/Layout';
 
-export class App extends Component {
-  state = {
-    query: '',
-    items: [],
-    page: 1,
-    total: 0,
-    error: false,
-    isLoading: false,
-  };
+export function App() {
+  const [query, setQuery] = useState('');
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  componentDidUpdate(_, pState) {
-    const { query, page } = this.state;
-    const queryToSearch = query.split('/').slice(1).join('');
+  // http request
+  useEffect(() => {
+    if (!query) return;
 
-    if (pState.query !== query || pState.page !== page) {
-      this.fetchImages(queryToSearch, page);
-    }
+    const fetchImages = async () => {
+      try {
+        setIsLoading(true);
 
-    if (page > 1) {
-      onWindowScroll(460);
-    }
-  }
+        const queryToSearch = query.split('/').slice(1).join('');
+        const response = await pixabayAPI.getImages(queryToSearch, page);
 
-  onSearchFormSubmit = query => {
-    this.setState({ query, items: [], page: 1, error: null });
-  };
+        if (!response.hits.length) {
+          toast.error('Sorry, no images found');
+          return;
+        }
 
-  fetchImages = async (query, page) => {
-    try {
-      this.setState({ isLoading: true });
-      const response = await pixabayAPI.getImages(query, page);
+        if (page === 1) toast.success(`We found ${response.total} images`);
 
-      if (!response.hits.length) {
-        toast.error('Sorry, no images found');
-        return;
+        setItems(prevItems => [...prevItems, ...response.hits]);
+        setTotal(response.total);
+      } catch (error) {
+        setError(true);
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (page === 1) {
-        toast.success(`We found ${response.total} images`);
-      }
+    fetchImages();
+  }, [query, page]);
 
-      this.setState(pState => ({
-        items: [...pState.items, ...response.hits],
-        total: response.total,
-      }));
-    } catch (error) {
-      this.setState({ error: true });
-    } finally {
-      this.setState({ isLoading: false });
-    }
+  // scroll after loading more
+  useLayoutEffect(() => {
+    if (items.length <= 12) return;
+    onWindowScroll(520);
+  }, [items.length]);
+
+  const onSearchFormSubmit = query => {
+    setQuery(query);
+    setItems([]);
+    setPage(1);
+    setError(false);
   };
 
-  onLoadMoreClick = () => {
-    this.setState(pState => ({
-      page: pState.page + 1,
-    }));
-  };
+  const onLoadMoreClick = () => setPage(prevPage => prevPage + 1);
 
-  checkLastItems = () => {
-    const { items, total } = this.state;
-    return items.length === total;
-  };
+  return (
+    <Layout>
+      <Searchbar onSubmit={onSearchFormSubmit} />
 
-  render() {
-    const { items, isLoading, error } = this.state;
-    const isLastItems = this.checkLastItems();
+      {items.length > 0 && (
+        <>
+          <ImageGallery items={items} />
+          {items.length === total ? (
+            <Message>The end of results</Message>
+          ) : (
+            <LoadMoreBtn onLoadMore={onLoadMoreClick} />
+          )}
+        </>
+      )}
 
-    return (
-      <Layout>
-        <Searchbar onSubmit={this.onSearchFormSubmit} />
+      {isLoading && <Loader />}
+      {error && (
+        <Message>Oops, something went wrong...Try again later!</Message>
+      )}
 
-        {items.length > 0 && (
-          <>
-            <ImageGallery items={items} />
-            {isLastItems ? (
-              <Message>The end of results</Message>
-            ) : (
-              <LoadMoreBtn onLoadMore={this.onLoadMoreClick} />
-            )}
-          </>
-        )}
+      <ScrollToTopBtn />
 
-        {isLoading && <Loader />}
-        {error && (
-          <Message>Oops, something went wrong...Try again later!</Message>
-        )}
-
-        <ScrollToTopBtn />
-        <Toaster />
-        <GlobalStyle />
-      </Layout>
-    );
-  }
+      <Toaster />
+      <GlobalStyle />
+    </Layout>
+  );
 }

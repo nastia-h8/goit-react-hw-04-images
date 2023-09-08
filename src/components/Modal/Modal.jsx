@@ -1,37 +1,32 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { Overlay, ModalContent } from './Modal.styled';
 
-export class Modal extends Component {
-  static propTypes = {
-    url: PropTypes.string.isRequired,
-    tags: PropTypes.string.isRequired,
-  };
+export function Modal({ url, tags, onModalClose }) {
+  useEffect(() => {
+    const onEscKeyPress = e => {
+      if (e.code === 'Escape') {
+        onModalClose();
+      }
+    };
+    window.addEventListener('keydown', onEscKeyPress);
 
-  componentDidMount() {
-    window.addEventListener('keydown', this.onEscKeyPress);
-  }
+    return () => {
+      window.removeEventListener('keydown', onEscKeyPress);
+    };
+  }, [onModalClose]);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.onEscKeyPress);
-  }
-
-  onEscKeyPress = e => {
-    if (e.code === 'Escape') {
-      this.props.onModalClose();
-    }
-  };
-
-  render() {
-    const { url, tags } = this.props;
-
-    return (
-      <Overlay>
-        <ModalContent>
-          <img src={url} alt={tags} />
-        </ModalContent>
-      </Overlay>
-    );
-  }
+  return (
+    <Overlay>
+      <ModalContent>
+        <img src={url} alt={tags} />
+      </ModalContent>
+    </Overlay>
+  );
 }
+
+Modal.propTypes = {
+  url: PropTypes.string.isRequired,
+  tags: PropTypes.string.isRequired,
+};

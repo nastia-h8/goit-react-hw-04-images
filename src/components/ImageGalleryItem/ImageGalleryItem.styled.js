@@ -3,6 +3,7 @@ import styled from 'styled-components';
 export const Item = styled.li`
   border-radius: ${p => p.theme.radii.sm};
   box-shadow: ${p => p.theme.shadow};
+  overflow: hidden;
 `;
 
 export const Img = styled.img`
