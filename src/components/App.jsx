@@ -32,7 +32,6 @@ export function App() {
 
         const queryToSearch = query.split('/').slice(1).join('');
         const response = await pixabayAPI.getImages(queryToSearch, page);
-        console.log(response);
 
         if (!response.hits.length) {
           toast.error('Sorry, no images found');
